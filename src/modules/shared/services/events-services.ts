@@ -38,6 +38,7 @@ async function fetchFromApi(endpoint: string): Promise<Event[]> {
 
       url = `${baseUrl}${endpoint}`;
     }
+    console.log("[DEBUG] Fetching from:", url);
 
     console.log("[EVENTS_SERVICE] Fetching from:", url); // Debug log
 

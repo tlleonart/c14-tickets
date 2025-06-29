@@ -4,6 +4,8 @@ import prisma from "@/modules/shared/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
+  console.log("[DEBUG] /api/events handler triggered");
+  console.log("[DEBUG] Headers:", Object.fromEntries(req.headers.entries()));
   try {
     const { searchParams } = new URL(req.url);
     const isFeatured = searchParams.get("featured") === "true";
@@ -104,6 +106,7 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error("[GET_EVENTS_ERROR]", error);
+    console.log("[DEBUG] Error type:", error?.constructor?.name);
     return new NextResponse("Error fetching events", { status: 500 });
   }
 }
