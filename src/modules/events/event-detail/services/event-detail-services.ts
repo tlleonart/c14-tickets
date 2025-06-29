@@ -65,13 +65,11 @@ export interface EventDetailType {
 async function fetchEventBySlugFromApi(slug: string): Promise<EventDetailType> {
   try {
     // ✅ Fixed URL construction
-    const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
-      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-      : "";
+    const isBrowser = typeof window !== "undefined";
 
-    const url = baseUrl
-      ? `${baseUrl}/api/events/${encodeURIComponent(slug)}`
-      : `/api/events/${encodeURIComponent(slug)}`;
+    const baseUrl = isBrowser ? "" : "http://localhost:3000";
+
+    const url = `${baseUrl}/api/events/${encodeURIComponent(slug)}`;
 
     const res = await fetch(url);
 

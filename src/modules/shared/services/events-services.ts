@@ -23,21 +23,13 @@ export interface Event {
 async function fetchFromApi(endpoint: string): Promise<Event[]> {
   try {
     // ✅ Fixed URL construction for all environments
-    let url: string;
+    const isBrowser = typeof window !== "undefined";
 
-    if (typeof window !== "undefined") {
-      // Client-side: use relative URLs
-      url = endpoint;
-    } else {
-      // Server-side: need absolute URL
-      const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
-        ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-        : process.env.NEXT_PUBLIC_SITE_URL
-        ? process.env.NEXT_PUBLIC_SITE_URL
-        : "http://localhost:3000";
+    // En cliente: ruta relativa
+    // En servidor: localhost en desarrollo (Next resuelve host real en producción)
+    const baseUrl = isBrowser ? "" : "http://localhost:3000";
 
-      url = `${baseUrl}${endpoint}`;
-    }
+    const url = `${baseUrl}${endpoint}`;
     console.log("[DEBUG] Fetching from:", url);
 
     console.log("[EVENTS_SERVICE] Fetching from:", url); // Debug log

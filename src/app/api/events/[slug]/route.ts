@@ -24,7 +24,7 @@ export async function GET(
             name: true,
             address: true,
             capacity: true,
-            city: true,
+            city: true, // ✅ Added city for better location info
           },
         },
         stages: {

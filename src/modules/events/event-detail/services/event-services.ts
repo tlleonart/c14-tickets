@@ -23,11 +23,11 @@ export interface Event {
 async function fetchFromApi(endpoint: string): Promise<Event[]> {
   try {
     // ✅ Fixed URL construction
-    const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
-      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-      : "";
+    const isBrowser = typeof window !== "undefined";
 
-    const url = baseUrl ? `${baseUrl}${endpoint}` : endpoint;
+    const baseUrl = isBrowser ? "" : "http://localhost:3000";
+
+    const url = `${baseUrl}${endpoint}`;
 
     const response = await fetch(url);
 
