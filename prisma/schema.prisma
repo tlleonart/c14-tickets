@@ -1,0 +1,219 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  clerkId   String   @unique
+  email     String   @unique
+  fullName  String
+  isVip     Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  organizer  Organizer?
+  tickets    TicketPurchase[]
+  validator  Validator?
+  newsletter Newsletter?
+
+  @@map("users")
+}
+
+model Organizer {
+  id          String   @id @default(uuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String   @unique
+  billingInfo Json
+  verified    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  events Event[]
+
+  @@map("organizers")
+}
+
+model Venue {
+  id               String   @id @default(cuid())
+  name             String
+  city             String?
+  address          String
+  contactEmail     String
+  capacity         Int
+  sectorInfo       Json
+  requiresApproval Boolean  @default(true)
+  isVerified       Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  events Event[]
+
+  @@map("venues")
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  organizer   Organizer @relation(fields: [organizerId], references: [id])
+  organizerId String
+  venue       Venue?    @relation(fields: [venueId], references: [id])
+  venueId     String?
+  capacity    Int?
+
+  name             String
+  category         String
+  shortDescription String
+  longDescription  String
+  locationName     String
+  locationCity     String
+  status           EventStatus
+  thumbnailUrl     String
+  coverImageUrl    String
+  videoUrl         String?
+  startDatetime    DateTime
+  endDatetime      DateTime
+  createdAt        DateTime    @default(now())
+
+  stages        EventStage[]
+  validators    Validator[]
+  purchases     TicketPurchase[]
+  FeaturedEvent FeaturedEvent?
+
+  @@map("events")
+}
+
+model EventStage {
+  id        String   @id @default(uuid())
+  event     Event    @relation(fields: [eventId], references: [id])
+  eventId   String
+  stageName String
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(false)
+
+  ticketTypes TicketType[]
+
+  @@map("event_stages")
+}
+
+model TicketType {
+  id            String        @id @default(uuid())
+  eventStage    EventStage    @relation(fields: [eventStageId], references: [id])
+  eventStageId  String
+  name          String
+  price         Float
+  capacity      Int
+  discountType  DiscountType?
+  discountValue Float?
+  Ticket        Ticket[]
+
+  @@map("ticket_types")
+}
+
+model TicketPurchase {
+  id                  String             @id @default(uuid())
+  user                User?              @relation(fields: [userId], references: [id])
+  userId              String?
+  unregisteredBuyer   UnregisteredBuyer? @relation(fields: [unregisteredBuyerId], references: [id])
+  unregisteredBuyerId String?
+
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String
+
+  paymentStatus     PaymentStatus
+  paymentProvider   PaymentProvider
+  mercadoPagoId     String?
+  externalReference String?
+  totalPrice        Float
+  createdAt         DateTime        @default(now())
+
+  tickets Ticket[]
+
+  @@map("ticket_purchases")
+}
+
+model Ticket {
+  id               String         @id @default(uuid())
+  ticketPurchase   TicketPurchase @relation(fields: [ticketPurchaseId], references: [id])
+  ticketPurchaseId String
+  ticketType       TicketType     @relation(fields: [ticketTypeId], references: [id])
+  ticketTypeId     String
+
+  qrCode       String     @unique
+  isRedeemed   Boolean    @default(false)
+  redeemedAt   DateTime?
+  redeemedBy   Validator? @relation(fields: [redeemedById], references: [id])
+  redeemedById String?
+
+  @@map("tickets")
+}
+
+model UnregisteredBuyer {
+  id        String   @id @default(uuid())
+  email     String
+  fullName  String
+  dni       String?
+  createdAt DateTime @default(now())
+
+  purchases TicketPurchase[]
+
+  @@map("unregistered_buyers")
+}
+
+model Validator {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @unique
+  event     Event    @relation(fields: [eventId], references: [id])
+  eventId   String
+  createdAt DateTime @default(now())
+
+  validatedTickets Ticket[]
+
+  @@map("validators")
+}
+
+model Newsletter {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?  @unique
+  createdAt DateTime @default(now())
+
+  @@map("newsletter")
+}
+
+enum EventStatus {
+  ANNOUNCED
+  ACTIVE
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+}
+
+enum PaymentProvider {
+  MERCADO_PAGO
+  STRIPE
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+model FeaturedEvent {
+  id         String   @id @default(cuid())
+  event      Event    @relation(fields: [eventId], references: [id])
+  eventId    String   @unique
+  featuredAt DateTime @default(now())
+
+  @@map("featured_events")
+}

@@ -1,0 +1,1 @@
+export type ROLE = "CUSTOMER" | "ORGANIZER" | "VALIDATOR" | "ADMIN";

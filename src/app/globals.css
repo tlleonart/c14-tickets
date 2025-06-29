@@ -1,26 +1,427 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Carbono Tickets Brand Colors */
+  --color-carbono-black: var(--carbono-black);
+  --color-carbono-black-light: var(--carbono-black-light);
+  --color-carbono-black-lighter: var(--carbono-black-lighter);
+  --color-carbono-yellow: var(--carbono-yellow);
+  --color-carbono-yellow-dark: var(--carbono-yellow-dark);
+  --color-carbono-yellow-light: var(--carbono-yellow-light);
+  --color-carbono-red: var(--carbono-red);
+  --color-carbono-red-dark: var(--carbono-red-dark);
+  --color-carbono-red-light: var(--carbono-red-light);
+
+  /* Extended Spacing */
+  --space-18: 4.5rem;
+  --space-88: 22rem;
+  --space-128: 32rem;
+  --space-144: 36rem;
+
+  /* Extended Shadows */
+  --shadow-glow-yellow: 0 0 20px oklch(0.8 0.15 85 / 0.3);
+  --shadow-glow-red: 0 0 20px oklch(0.6 0.25 27 / 0.3);
+  --shadow-card-hover: 0 10px 25px -3px oklch(0 0 0 / 0.1), 0 4px 6px -2px oklch(0 0 0 / 0.05);
+  --shadow-xl-dark: 0 20px 25px -5px oklch(0 0 0 / 0.3), 0 10px 10px -5px oklch(0 0 0 / 0.2);
+
+  /* Animation Durations */
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+
+  /* Z-Index Scale */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-toast: 1080;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --radius: 0.625rem;
+  
+  /* Dark theme as default for Carbono Tickets */
+  --background: oklch(0.06 0 0); /* Carbono Black */
+  --foreground: oklch(0.985 0 0); /* White text */
+  --card: oklch(0.12 0 0); /* Carbono Black Light */
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.12 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.8 0.15 85); /* Carbono Yellow as primary */
+  --primary-foreground: oklch(0.06 0 0); /* Dark text on yellow */
+  --secondary: oklch(0.18 0 0); /* Carbono Black Lighter */
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.18 0 0); /* Darker muted */
+  --muted-foreground: oklch(0.708 0 0); /* Lighter muted text */
+  --accent: oklch(0.18 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.6 0.25 27); /* Carbono Red */
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 10%); /* Subtle white borders */
+  --input: oklch(1 0 0 / 15%); /* Subtle input backgrounds */
+  --ring: oklch(0.8 0.15 85); /* Yellow focus ring */
+  --chart-1: oklch(0.8 0.15 85); /* Yellow */
+  --chart-2: oklch(0.6 0.25 27); /* Red */
+  --chart-3: oklch(0.7 0.1 200); /* Blue */
+  --chart-4: oklch(0.7 0.15 120); /* Green */
+  --chart-5: oklch(0.7 0.2 300); /* Purple */
+  --sidebar: oklch(0.12 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.8 0.15 85);
+  --sidebar-primary-foreground: oklch(0.06 0 0);
+  --sidebar-accent: oklch(0.18 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.8 0.15 85);
+
+  /* Carbono Tickets Brand Colors */
+  --carbono-black: oklch(0.06 0 0); /* #0a0a0a */
+  --carbono-black-light: oklch(0.12 0 0); /* #1a1a1a */
+  --carbono-black-lighter: oklch(0.18 0 0); /* #2a2a2a */
+  --carbono-yellow: oklch(0.8 0.15 85); /* #fbbf24 */
+  --carbono-yellow-dark: oklch(0.75 0.15 80); /* #f59e0b */
+  --carbono-yellow-light: oklch(0.9 0.1 85); /* #fde68a */
+  --carbono-red: oklch(0.6 0.25 27); /* #ef4444 */
+  --carbono-red-dark: oklch(0.55 0.25 27); /* #dc2626 */
+  --carbono-red-light: oklch(0.75 0.2 27); /* #fca5a5 */
+
+  /* Brand colors (keeping for compatibility) */
+  --brand-primary: #fbbf24; /* Carbono Yellow */
+  --brand-primary-hover: #f59e0b;
+  --brand-secondary: #6366F1;
+  --brand-success: #10B981;
+  --brand-error: #ef4444; /* Carbono Red */
+  --brand-warning: #F59E0B;
+}
+
+.light {
+  /* Light theme (optional - only if user specifically wants it) */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.8 0.15 85); /* Keep yellow as primary */
+  --primary-foreground: oklch(0.06 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.6 0.25 27);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.8 0.15 85);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+}
+
+.dark {
+  /* Enhanced dark theme (same as root for consistency) */
+  --background: oklch(0.06 0 0); /* Carbono Black */
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.12 0 0); /* Carbono Black Light */
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.12 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.8 0.15 85); /* Carbono Yellow */
+  --primary-foreground: oklch(0.06 0 0);
+  --secondary: oklch(0.18 0 0); /* Carbono Black Lighter */
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.18 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.18 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.6 0.25 27); /* Carbono Red */
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.8 0.15 85);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Typography System */
+  h1, .h1 {
+    @apply text-4xl font-bold tracking-tight lg:text-5xl;
+  }
+
+  h2, .h2 {
+    @apply text-3xl font-semibold tracking-tight;
+  }
+
+  h3, .h3 {
+    @apply text-2xl font-semibold;
+  }
+
+  h4, .h4 {
+    @apply text-xl font-semibold;
+  }
+
+  h5, .h5 {
+    @apply text-lg font-medium;
+  }
+
+  h6, .h6 {
+    @apply text-base font-medium;
+  }
+
+  /* Scrollbar Styles */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--muted) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: var(--muted);
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* Layout Utilities */
+  .container-fluid {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .container-narrow {
+    @apply mx-auto max-w-4xl px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Text Utilities */
+  .text-gradient {
+    @apply bg-gradient-to-r from-carbono-yellow to-carbono-yellow-light bg-clip-text text-transparent;
+  }
+
+  .text-muted {
+    @apply text-muted-foreground;
+  }
+
+  /* Component Patterns */
+  .card-glass {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-1;
+  }
+
+  .btn-gradient {
+    @apply bg-gradient-to-r from-carbono-yellow to-carbono-yellow-dark text-carbono-black;
+  }
+
+  .section-padding {
+    @apply py-16 sm:py-20 lg:py-24;
+  }
+
+  .section-padding-sm {
+    @apply py-8 sm:py-12 lg:py-16;
+  }
+
+  /* Focus Styles */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  }
+
+  /* Loading States */
+  .skeleton {
+    @apply animate-pulse bg-muted rounded;
+  }
+
+  /* Line Clamps */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+}
+
+@layer utilities {
+  /* Custom animations */
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out;
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.5s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.2s ease-out;
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Glow effects */
+  .glow-yellow {
+    box-shadow: var(--shadow-glow-yellow);
+  }
+
+  .glow-red {
+    box-shadow: var(--shadow-glow-red);
+  }
+
+  /* Background utilities */
+  .bg-gradient-hero {
+    background: linear-gradient(135deg, var(--carbono-black) 0%, var(--carbono-black-light) 50%, var(--carbono-black-lighter) 100%);
+  }
+}
+
+/* Custom Keyframes */
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes fade-in-up {
+  0% { 
+    opacity: 0; 
+    transform: translateY(10px); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes scale-in {
+  0% { 
+    opacity: 0; 
+    transform: scale(0.9); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+}
+
+@keyframes slide-in-right {
+  0% { 
+    opacity: 0; 
+    transform: translateX(10px); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateX(0); 
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  background-size: 468px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
