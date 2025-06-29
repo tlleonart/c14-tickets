@@ -1,14 +1,13 @@
 import prisma from "@/modules/shared/lib/prisma";
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
-
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const { slug } = await params;
+
     const event = await prisma.event.findUnique({
       where: { slug },
       include: {
