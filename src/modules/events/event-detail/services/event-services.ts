@@ -22,41 +22,23 @@ export interface Event {
 
 async function fetchFromApi(endpoint: string): Promise<Event[]> {
   try {
-    // ✅ Fixed URL construction for all environments
-    let url: string;
+    // ✅ Fixed URL construction
+    const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
+      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+      : "";
 
-    if (typeof window !== "undefined") {
-      // Client-side: use relative URLs
-      url = endpoint;
-    } else {
-      // Server-side: need absolute URL
-      const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
-        ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-        : process.env.NEXT_PUBLIC_SITE_URL
-        ? process.env.NEXT_PUBLIC_SITE_URL
-        : "http://localhost:3000";
+    const url = baseUrl ? `${baseUrl}${endpoint}` : endpoint;
 
-      url = `${baseUrl}${endpoint}`;
-    }
-
-    console.log("[EVENTS_SERVICE] Fetching from:", url); // Debug log
-
-    const response = await fetch(url, {
-      // Add headers for server-side requests
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const response = await fetch(url);
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log("[EVENTS_SERVICE] Raw response:", data); // Debug log
 
-    // ✅ Handle the API response structure: { events: [...], pagination: {...} }
-    const events = data.events || data;
+    // ✅ Handle the new API response structure: { events: [...], pagination: {...} }
+    const events = data.events || data; // If it's the old direct array format, use that
 
     if (!Array.isArray(events)) {
       console.error("[EVENTS_API_ERROR] Expected events array, got:", data);

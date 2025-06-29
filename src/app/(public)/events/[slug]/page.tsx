@@ -2,8 +2,8 @@ import { EventDetail } from "@/modules/events/event-detail/event-detail-page";
 import { fetchEventBySlug } from "@/modules/events/event-detail/services/event-detail-services";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { ErrorState } from "@/modules/shared/components/ui/error-state";
 import { EventDetailSkeleton } from "@/modules/events/event-detail/components/event-detail-skeleton";
+import { ErrorState } from "@/modules/shared/components/ui/error-state";
 
 // Generate metadata for SEO
 export async function generateMetadata({
@@ -39,7 +39,7 @@ export async function generateMetadata({
       },
     };
   } catch (error) {
-    console.error("Evento no encontrado, error: ", error);
+    console.error("Error buscando evento: ", error);
     return {
       title: "Evento no encontrado | Carbono Tickets",
     };

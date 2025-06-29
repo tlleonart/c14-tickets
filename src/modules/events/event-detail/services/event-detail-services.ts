@@ -61,13 +61,20 @@ export interface EventDetailType {
   capacity: number;
 }
 
+// Solo cambio mínimo en la URL
 async function fetchEventBySlugFromApi(slug: string): Promise<EventDetailType> {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_VERCEL_URL}/api/events/${encodeURIComponent(
-        slug
-      )}`
-    );
+    // ✅ Fixed URL construction
+    const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
+      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+      : "";
+
+    const url = baseUrl
+      ? `${baseUrl}/api/events/${encodeURIComponent(slug)}`
+      : `/api/events/${encodeURIComponent(slug)}`;
+
+    const res = await fetch(url);
+
     if (!res.ok) {
       if (res.status === 404) {
         throw new Error("Evento no encontrado");

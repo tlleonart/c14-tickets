@@ -1,13 +1,33 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import prisma from "@/modules/shared/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const isFeatured = searchParams.get("featured") === "true";
-
   try {
+    const { searchParams } = new URL(req.url);
+    const isFeatured = searchParams.get("featured") === "true";
+    const category = searchParams.get("category");
+    const city = searchParams.get("city");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const offset = parseInt(searchParams.get("offset") || "0");
+
+    const where: any = {};
+
+    if (isFeatured) {
+      where.FeaturedEvent = { isNot: null };
+    }
+
+    if (category) {
+      where.category = category;
+    }
+
+    if (city) {
+      where.locationCity = city;
+    }
+
     const events = await prisma.event.findMany({
-      where: isFeatured ? { FeaturedEvent: { isNot: null } } : undefined,
+      where,
       include: {
         organizer: {
           select: {
@@ -15,28 +35,73 @@ export async function GET(req: Request) {
             user: { select: { fullName: true } },
           },
         },
-        FeaturedEvent: true,
+        FeaturedEvent: {
+          select: { featuredAt: true },
+        },
       },
-      orderBy: { startDatetime: "asc" },
+      orderBy: [
+        // ✅ Featured events first, then by date
+        { FeaturedEvent: { featuredAt: "desc" } },
+        { startDatetime: "asc" },
+      ],
+      take: limit,
+      skip: offset,
     });
 
-    const eventsWithMinPrice = await Promise.all(
-      events.map(async (e) => {
-        const agg = await prisma.ticketType.aggregate({
-          where: {
-            eventStage: { eventId: e.id },
-          },
-          _min: { price: true },
-        });
+    const eventIds = events.map((e) => e.id);
 
-        return {
-          ...e,
-          minPrice: agg._min.price ?? 0,
-        };
-      })
-    );
+    {
+      /*const ticketPrices = await prisma.ticketType.groupBy({
+      by: ["eventStageId"],
+      where: {
+        eventStage: {
+          eventId: { in: eventIds },
+        },
+      },
+      _min: { price: true },
+      include: {
+        eventStage: {
+          select: { eventId: true },
+        },
+      },
+    });*/
+    }
 
-    return NextResponse.json(eventsWithMinPrice);
+    const priceMap = new Map();
+    for (const stage of await prisma.eventStage.findMany({
+      where: { eventId: { in: eventIds } },
+      include: {
+        ticketTypes: {
+          select: { price: true },
+        },
+      },
+    })) {
+      const minPrice = Math.min(...stage.ticketTypes.map((tt) => tt.price));
+      if (
+        !priceMap.has(stage.eventId) ||
+        priceMap.get(stage.eventId) > minPrice
+      ) {
+        priceMap.set(stage.eventId, minPrice);
+      }
+    }
+
+    const eventsWithMinPrice = events.map((event) => ({
+      ...event,
+      minPrice: priceMap.get(event.id) ?? 0,
+      isFeatured: !!event.FeaturedEvent,
+    }));
+
+    const total = await prisma.event.count({ where });
+
+    return NextResponse.json({
+      events: eventsWithMinPrice,
+      pagination: {
+        total,
+        limit,
+        offset,
+        hasMore: total > offset + limit,
+      },
+    });
   } catch (error) {
     console.error("[GET_EVENTS_ERROR]", error);
     return new NextResponse("Error fetching events", { status: 500 });

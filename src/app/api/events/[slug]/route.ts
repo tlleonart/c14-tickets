@@ -3,11 +3,11 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
-  const { slug } = params;
-
   try {
+    const { slug } = await params;
+
     const event = await prisma.event.findUnique({
       where: { slug },
       include: {
@@ -24,6 +24,7 @@ export async function GET(
             name: true,
             address: true,
             capacity: true,
+            city: true,
           },
         },
         stages: {
