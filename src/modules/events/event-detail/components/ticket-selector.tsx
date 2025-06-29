@@ -11,7 +11,6 @@ import { Badge } from "@/modules/shared/components/ui/badge";
 import { Button } from "@/modules/shared/components/ui/button";
 import { cn } from "@/modules/shared/lib/utils";
 
-// TODO: This will come from API/props in the future
 const ticketTypes = [
   {
     id: "general",
