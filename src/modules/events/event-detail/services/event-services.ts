@@ -25,7 +25,13 @@ async function fetchFromApi(endpoint: string): Promise<Event[]> {
     // ✅ Fixed URL construction
     const isBrowser = typeof window !== "undefined";
 
-    const baseUrl = isBrowser ? "" : "http://localhost:3000";
+    const baseUrl = isBrowser
+      ? ""
+      : process.env.NODE_ENV === "production"
+      ? process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : ""
+      : "http://localhost:3000";
 
     const url = `${baseUrl}${endpoint}`;
 
