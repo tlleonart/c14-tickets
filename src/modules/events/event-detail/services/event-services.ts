@@ -28,8 +28,8 @@ async function fetchFromApi(endpoint: string): Promise<Event[]> {
     const baseUrl = isBrowser
       ? ""
       : process.env.NODE_ENV === "production"
-      ? process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
+      ? process.env.VERCEL_PUBLIC_URL
+        ? `https://${process.env.VERCEL_PUBLIC_URL}`
         : ""
       : "http://localhost:3000";
 
