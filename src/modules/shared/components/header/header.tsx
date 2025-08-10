@@ -25,7 +25,6 @@ export const Header: FC = () => {
 
   /* const handleSearch = (query: string) => {
     // Navigate to search results or handle search logic
-    console.log("Searching for:", query);
     // You can implement navigation to search results page here
     // router.push(`/events?search=${encodeURIComponent(query)}`);
   };

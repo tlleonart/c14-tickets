@@ -140,8 +140,6 @@ export function PurchaseSummary({
         ...(!isSignedIn && { buyer: buyerInfo }),
       };
 
-      console.log("Creating purchase:", requestBody);
-
       const response = await fetch("/api/purchases", {
         method: "POST",
         headers: {
@@ -156,7 +154,6 @@ export function PurchaseSummary({
       }
 
       const data = await response.json();
-      console.log("Purchase created:", data);
 
       // Redirigir a MercadoPago
       if (data.paymentUrl) {
