@@ -1,7 +1,13 @@
-import Link from "next/link";
+"use client";
+
 import { Button } from "@/modules/shared/components/ui/button";
 
 export function CallToActionSection() {
+  const handleContactClick = () => {
+    window.location.href =
+      "mailto:info@carbono-14.net?subject=Consulta sobre organización de eventos&body=Hola,%0D%0A%0D%0AEstoy interesado en organizar eventos con Carbono Tickets.%0D%0A%0D%0APor favor, contáctenme para más información.%0D%0A%0D%0AGracias!";
+  };
+
   return (
     <section className="section-padding bg-gradient-to-r from-carbono-black via-carbono-black-light to-carbono-black">
       <div className="container-narrow text-center">
@@ -11,10 +17,8 @@ export function CallToActionSection() {
           organizas eventos underground como mainstream, tenemos las
           herramientas que necesitas.
         </p>
-        <Button asChild size="lg" className="btn-gradient">
-          <Link href="/organizer/register-organizer">
-            Comenzar como organizador
-          </Link>
+        <Button onClick={handleContactClick} size="lg" className="btn-gradient">
+          CONTÁCTANOS
         </Button>
       </div>
     </section>

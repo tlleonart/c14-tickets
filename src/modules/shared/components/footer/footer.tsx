@@ -1,3 +1,5 @@
+"use client";
+
 import { FC } from "react";
 import Link from "next/link";
 // import { Separator } from "@/modules/shared/components/ui/separator";
@@ -59,6 +61,10 @@ import Link from "next/link";
 
 export const Footer: FC = () => {
   const currentYear = new Date().getFullYear();
+  const handleContactClick = () => {
+    window.location.href =
+      "mailto:info@carbono-14.net?subject=Consulta sobre venta de entradas&body=Hola,%0D%0A%0D%0AEstoy interesado en vender entradas con Carbono Tickets.%0D%0A%0D%0APor favor, contáctenme para más información.%0D%0A%0D%0AGracias!";
+  };
 
   return (
     <footer className="border-t border-border/50 bg-muted/10">
@@ -82,12 +88,12 @@ export const Footer: FC = () => {
 
           {/* Minimal Links - Only what we actually have */}
           <div className="flex items-center gap-4">
-            <Link
-              href="/organizer/register-organizer"
-              className="hover:text-foreground transition-colors"
+            <button
+              onClick={handleContactClick}
+              className="hover:text-foreground transition-colors cursor-pointer bg-transparent border-none text-sm text-muted-foreground"
             >
               Vender entradas
-            </Link>
+            </button>
             {/* TODO: Uncomment when pages are created */}
             {/* <Link href="/terms" className="hover:text-foreground transition-colors">
               Términos

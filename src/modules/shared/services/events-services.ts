@@ -37,10 +37,6 @@ async function fetchFromApi(endpoint: string): Promise<Event[]> {
 
     const url = `${baseUrl}${endpoint}`;
 
-    console.log("[DEBUG] Fetching from:", url);
-
-    console.log("[EVENTS_SERVICE] Fetching from:", url); // Debug log
-
     const response = await fetch(url, {
       // Add headers for server-side requests
       headers: {
@@ -53,7 +49,6 @@ async function fetchFromApi(endpoint: string): Promise<Event[]> {
     }
 
     const data = await response.json();
-    console.log("[EVENTS_SERVICE] Raw response:", data); // Debug log
 
     // ✅ Handle the API response structure: { events: [...], pagination: {...} }
     const events = data.events || data;

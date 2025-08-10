@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import { ShoppingCart, CreditCard, AlertCircle } from "lucide-react";
+import { ShoppingCart, CreditCard, AlertCircle, User } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -10,43 +11,21 @@ import {
 import { Separator } from "@/modules/shared/components/ui/separator";
 import { Button } from "@/modules/shared/components/ui/button";
 import { Badge } from "@/modules/shared/components/ui/badge";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/modules/shared/lib/utils";
-
-// TODO: This will come from API/props in the future - should match TicketSelector
-const ticketPrices = {
-  general: {
-    price: 15000,
-    name: "Entrada General",
-    discountType: null,
-    discountValue: null,
-  },
-  vip: {
-    price: 35000,
-    name: "Entrada VIP",
-    discountType: "PERCENTAGE",
-    discountValue: 10,
-  },
-  premium: {
-    price: 55000,
-    name: "Entrada Premium",
-    discountType: null,
-    discountValue: null,
-  },
-};
-
-interface Event {
-  id: string;
-  title: string;
-  date: string;
-  venue: string;
-  status: string;
-}
+import { useUser } from "@clerk/nextjs";
+import { EventDetailType } from "../services/event-detail-services";
 
 interface PurchaseSummaryProps {
-  event: Event;
+  event: EventDetailType;
   selectedTickets: Record<string, number>;
   onTicketsChange: (tickets: Record<string, number>) => void;
+}
+
+interface BuyerInfo {
+  email: string;
+  fullName: string;
+  dni?: string;
 }
 
 export function PurchaseSummary({
@@ -54,9 +33,24 @@ export function PurchaseSummary({
   selectedTickets,
 }: PurchaseSummaryProps) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showBuyerForm, setShowBuyerForm] = useState(false);
+  const [buyerInfo, setBuyerInfo] = useState<BuyerInfo>({
+    email: "",
+    fullName: "",
+    dni: "",
+  });
 
-  const getDiscountedPrice = (ticketType: keyof typeof ticketPrices) => {
-    const ticket = ticketPrices[ticketType];
+  const { user, isSignedIn } = useUser();
+
+  // Obtener la etapa activa y sus tipos de tickets
+  const { activeStage, ticketTypes } = useMemo(() => {
+    const activeStage = event.stages.find((stage) => stage.isActive);
+    const ticketTypes = activeStage?.ticketTypes || [];
+    return { activeStage, ticketTypes };
+  }, [event.stages]);
+
+  // Función para calcular precio con descuentos
+  const getDiscountedPrice = (ticket: (typeof ticketTypes)[0]) => {
     if (!ticket.discountType || !ticket.discountValue) return ticket.price;
 
     if (ticket.discountType === "PERCENTAGE") {
@@ -68,46 +62,113 @@ export function PurchaseSummary({
     return ticket.price;
   };
 
-  const subtotal = Object.entries(selectedTickets).reduce(
-    (total, [type, count]) => {
-      const ticketType = type as keyof typeof ticketPrices;
-      if (ticketPrices[ticketType] && count > 0) {
-        return total + getDiscountedPrice(ticketType) * count;
-      }
-      return total;
-    },
-    0
-  );
+  // Calcular totales usando los datos reales del evento
+  const { subtotal, totalTickets, ticketDetails } = useMemo(() => {
+    let subtotal = 0;
+    let totalTickets = 0;
+    const ticketDetails: Array<{
+      id: string;
+      name: string;
+      quantity: number;
+      unitPrice: number;
+      originalPrice: number;
+      subtotal: number;
+      hasDiscount: boolean;
+    }> = [];
+
+    Object.entries(selectedTickets).forEach(([ticketId, quantity]) => {
+      if (quantity <= 0) return;
+
+      const ticket = ticketTypes.find((t) => t.id === ticketId);
+      if (!ticket) return;
+
+      const originalPrice = ticket.price;
+      const discountedPrice = getDiscountedPrice(ticket);
+      const ticketSubtotal = discountedPrice * quantity;
+      const hasDiscount = discountedPrice !== originalPrice;
+
+      subtotal += ticketSubtotal;
+      totalTickets += quantity;
+
+      ticketDetails.push({
+        id: ticket.id,
+        name: ticket.name,
+        quantity,
+        unitPrice: discountedPrice,
+        originalPrice,
+        subtotal: ticketSubtotal,
+        hasDiscount,
+      });
+    });
+
+    return { subtotal, totalTickets, ticketDetails };
+  }, [selectedTickets, ticketTypes]);
 
   const serviceFee = Math.round(subtotal * 0.1); // 10% service fee
   const total = subtotal + serviceFee;
-  const hasTickets = Object.values(selectedTickets).some((count) => count > 0);
-  const totalTickets = Object.values(selectedTickets).reduce(
-    (sum, count) => sum + count,
-    0
-  );
+  const hasTickets = totalTickets > 0;
 
   const handleProceedToPay = async () => {
+    if (!hasTickets) return;
+
+    // Si no está autenticado, mostrar formulario de comprador
+    if (!isSignedIn && !showBuyerForm) {
+      setShowBuyerForm(true);
+      return;
+    }
+
+    // Validar datos del comprador no registrado
+    if (!isSignedIn && (!buyerInfo.email || !buyerInfo.fullName)) {
+      alert("Por favor completa los campos requeridos");
+      return;
+    }
+
     setIsProcessing(true);
 
-    // TODO: Implement actual payment flow
     try {
-      console.log("Processing payment for:", {
+      // Preparar los tickets para la API usando IDs reales
+      const tickets = Object.entries(selectedTickets)
+        .filter(([_, count]) => count > 0)
+        .map(([ticketId, count]) => ({
+          ticketTypeId: ticketId, // Usar el ID real del ticket type
+          quantity: count,
+        }));
+
+      const requestBody = {
         eventId: event.id,
-        tickets: selectedTickets,
-        total: total,
+        tickets,
+        ...(!isSignedIn && { buyer: buyerInfo }),
+      };
+
+      console.log("Creating purchase:", requestBody);
+
+      const response = await fetch("/api/purchases", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
       });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al procesar la compra");
+      }
 
-      // TODO: Redirect to payment gateway or checkout page
-      alert(
-        "Redirigiendo al proceso de pago... (TODO: Implementar MercadoPago)"
-      );
+      const data = await response.json();
+      console.log("Purchase created:", data);
+
+      // Redirigir a MercadoPago
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+      } else {
+        throw new Error("No se recibió URL de pago");
+      }
     } catch (error) {
       console.error("Payment process failed:", error);
-      // TODO: Show error toast
+      alert(
+        error instanceof Error ? error.message : "Error al procesar el pago"
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -140,6 +201,28 @@ export function PurchaseSummary({
 
   const statusInfo = getStatusInfo(event.status);
 
+  // Si no hay etapa activa, mostrar mensaje
+  if (!activeStage) {
+    return (
+      <Card className="border-border/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-foreground">
+            <ShoppingCart className="w-5 h-5" />
+            Resumen de compra
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-center py-8">
+            <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">
+              Las entradas para este evento aún no están disponibles
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="border-border/50">
       <CardHeader>
@@ -153,57 +236,107 @@ export function PurchaseSummary({
         {/* Event Info */}
         <div className="space-y-2">
           <h3 className="font-semibold text-lg text-foreground line-clamp-2">
-            {event.title}
+            {event.name}
           </h3>
-          <p className="text-sm text-muted-foreground">{event.date}</p>
-          <p className="text-sm text-muted-foreground">{event.venue}</p>
+          <p className="text-sm text-muted-foreground">
+            {new Date(event.startDatetime).toLocaleDateString("es-ES", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {event.venue ? event.venue.name : event.locationName},{" "}
+            {event.venue ? event.venue.city : event.locationCity}
+          </p>
         </div>
 
         <Separator className="bg-border/50" />
+
+        {/* User Info */}
+        {isSignedIn ? (
+          <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-md border border-primary/20">
+            <User className="w-4 h-4 text-primary" />
+            <span className="text-sm text-foreground">
+              Comprando como:{" "}
+              {user?.fullName || user?.emailAddresses[0]?.emailAddress}
+            </span>
+          </div>
+        ) : showBuyerForm ? (
+          <div className="space-y-3 p-3 bg-muted/20 rounded-md border border-border/50">
+            <h4 className="font-medium text-foreground">Datos del comprador</h4>
+            <div className="space-y-2">
+              <input
+                type="email"
+                placeholder="Email *"
+                value={buyerInfo.email}
+                onChange={(e) =>
+                  setBuyerInfo({ ...buyerInfo, email: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Nombre completo *"
+                value={buyerInfo.fullName}
+                onChange={(e) =>
+                  setBuyerInfo({ ...buyerInfo, fullName: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm"
+                required
+              />
+              <input
+                type="text"
+                placeholder="DNI (opcional)"
+                value={buyerInfo.dni}
+                onChange={(e) =>
+                  setBuyerInfo({ ...buyerInfo, dni: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Los campos marcados con * son obligatorios
+            </p>
+          </div>
+        ) : null}
 
         {/* Ticket Summary */}
         {hasTickets ? (
           <div className="space-y-4">
             <div className="space-y-3">
-              {Object.entries(selectedTickets).map(([type, count]) => {
-                if (count === 0) return null;
-
-                const ticketType = type as keyof typeof ticketPrices;
-                const ticket = ticketPrices[ticketType];
-                if (!ticket) return null;
-
-                const discountedPrice = getDiscountedPrice(ticketType);
-                const originalPrice = ticket.price;
-                const hasDiscount = discountedPrice !== originalPrice;
-
-                return (
-                  <div key={type} className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground">
-                        {ticket.name}
-                      </p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{count} ×</span>
-                        {hasDiscount && (
-                          <span className="line-through">
-                            ${originalPrice.toLocaleString()}
-                          </span>
-                        )}
-                        <span
-                          className={
-                            hasDiscount ? "text-primary font-medium" : ""
-                          }
-                        >
-                          ${discountedPrice.toLocaleString()}
+              {ticketDetails.map((detail) => (
+                <div
+                  key={detail.id}
+                  className="flex justify-between items-start"
+                >
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground">{detail.name}</p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>{detail.quantity} ×</span>
+                      {detail.hasDiscount && (
+                        <span className="line-through">
+                          ${detail.originalPrice.toLocaleString()}
                         </span>
-                      </div>
+                      )}
+                      <span
+                        className={
+                          detail.hasDiscount ? "text-primary font-medium" : ""
+                        }
+                      >
+                        ${detail.unitPrice.toLocaleString()}
+                      </span>
                     </div>
-                    <p className="font-semibold text-foreground">
-                      ${(discountedPrice * count).toLocaleString()}
-                    </p>
                   </div>
-                );
-              })}
+                  <p className="font-semibold text-foreground">
+                    ${detail.subtotal.toLocaleString()}
+                  </p>
+                </div>
+              ))}
             </div>
 
             <Separator className="bg-border/50" />
@@ -231,15 +364,32 @@ export function PurchaseSummary({
 
             {/* Action Button */}
             {event.status === "ACTIVE" ? (
-              <Button
-                className="w-full btn-gradient"
-                size="lg"
-                onClick={handleProceedToPay}
-                disabled={isProcessing}
-              >
-                <CreditCard className="w-4 h-4 mr-2" />
-                {isProcessing ? "Procesando..." : "Proceder al pago"}
-              </Button>
+              <>
+                {!isSignedIn && !showBuyerForm ? (
+                  <Button
+                    className="w-full btn-gradient"
+                    size="lg"
+                    onClick={handleProceedToPay}
+                    disabled={isProcessing}
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Continuar como invitado
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full btn-gradient"
+                    size="lg"
+                    onClick={handleProceedToPay}
+                    disabled={
+                      isProcessing ||
+                      (!isSignedIn && (!buyerInfo.email || !buyerInfo.fullName))
+                    }
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    {isProcessing ? "Procesando..." : "Proceder al pago"}
+                  </Button>
+                )}
+              </>
             ) : (
               <Button className="w-full" size="lg" disabled variant="secondary">
                 <AlertCircle className="w-4 h-4 mr-2" />
@@ -248,7 +398,7 @@ export function PurchaseSummary({
             )}
 
             <div className="text-xs text-muted-foreground text-center">
-              Las entradas se enviarán por email después del pago
+              Serás redirigido a MercadoPago para completar el pago
             </div>
           </div>
         ) : (

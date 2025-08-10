@@ -10,50 +10,30 @@ import {
 import { Badge } from "@/modules/shared/components/ui/badge";
 import { Button } from "@/modules/shared/components/ui/button";
 import { cn } from "@/modules/shared/lib/utils";
-
-const ticketTypes = [
-  {
-    id: "general",
-    name: "Entrada General",
-    price: 15000,
-    description: "Acceso general al evento",
-    available: 150,
-    maxPerPerson: 6,
-    discountType: null,
-    discountValue: null,
-  },
-  {
-    id: "vip",
-    name: "Entrada VIP",
-    price: 35000,
-    description: "Acceso VIP con beneficios exclusivos",
-    available: 25,
-    maxPerPerson: 4,
-    discountType: "PERCENTAGE",
-    discountValue: 10, // 10% off
-  },
-  {
-    id: "premium",
-    name: "Entrada Premium",
-    price: 55000,
-    description: "Experiencia premium con meet & greet",
-    available: 10,
-    maxPerPerson: 2,
-    discountType: null,
-    discountValue: null,
-  },
-];
+import { EventDetailType } from "../services/event-detail-services";
+import { useMemo } from "react";
 
 interface TicketSelectorProps {
   selectedTickets: Record<string, number>;
   onTicketsChange: (tickets: Record<string, number>) => void;
-  eventId: string;
+  event: EventDetailType;
 }
 
 export function TicketSelector({
   selectedTickets,
   onTicketsChange,
+  event,
 }: TicketSelectorProps) {
+  // Obtener la etapa activa y sus tipos de tickets
+  const activeStage = useMemo(() => {
+    return event.stages.find((stage) => stage.isActive);
+  }, [event.stages]);
+
+  const ticketTypes = useMemo(() => {
+    if (!activeStage) return [];
+    return activeStage.ticketTypes;
+  }, [activeStage]);
+
   const updateTicketCount = (ticketId: string, change: number) => {
     const current = selectedTickets[ticketId] || 0;
     const newCount = Math.max(0, current + change);
@@ -61,7 +41,9 @@ export function TicketSelector({
 
     if (!ticket) return;
 
-    const maxCount = Math.min(ticket.available, ticket.maxPerPerson);
+    // Por ahora usamos la capacidad total como disponible
+    // En una implementación real, deberías obtener los tickets vendidos desde la API
+    const maxCount = Math.min(ticket.capacity, 10); // Máximo 10 por persona
     const finalCount = Math.min(newCount, maxCount);
 
     onTicketsChange({
@@ -86,7 +68,8 @@ export function TicketSelector({
     return ticket.discountType && ticket.discountValue;
   };
 
-  if (ticketTypes.length === 0) {
+  // Si no hay etapa activa
+  if (!activeStage) {
     return (
       <Card className="border-border/50">
         <CardContent className="p-8 text-center">
@@ -102,14 +85,48 @@ export function TicketSelector({
     );
   }
 
+  // Si no hay tipos de tickets en la etapa activa
+  if (ticketTypes.length === 0) {
+    return (
+      <Card className="border-border/50">
+        <CardContent className="p-8 text-center">
+          <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">
+            No hay tipos de entradas configurados
+          </h3>
+          <p className="text-muted-foreground">
+            Este evento aún no tiene tipos de entradas disponibles.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-4">
+      {/* Info de la etapa activa */}
+      <div className="p-3 bg-primary/5 rounded-md border border-primary/20">
+        <p className="text-sm font-medium text-foreground">
+          {activeStage.stageName}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Válida hasta:{" "}
+          {new Date(activeStage.endDate).toLocaleDateString("es-ES", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </p>
+      </div>
+
       {ticketTypes.map((ticket) => {
         const discountedPrice = getDiscountedPrice(ticket);
         const currentSelected = selectedTickets[ticket.id] || 0;
-        const maxAvailable = Math.min(ticket.available, ticket.maxPerPerson);
+        const maxAvailable = Math.min(ticket.capacity, 10); // Máximo 10 por persona
         const isMaxSelected = currentSelected >= maxAvailable;
-        const isUnavailable = ticket.available === 0;
+        const isUnavailable = ticket.capacity === 0;
 
         return (
           <Card
@@ -130,12 +147,13 @@ export function TicketSelector({
                         variant="secondary"
                         className="bg-primary/10 text-primary"
                       >
-                        -{ticket.discountValue}%
+                        -{ticket.discountValue}
+                        {ticket.discountType === "PERCENTAGE" ? "%" : "$"}
                       </Badge>
                     )}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {ticket.description}
+                    Entrada para {event.name}
                   </p>
                 </div>
 
@@ -162,7 +180,7 @@ export function TicketSelector({
                   >
                     {isUnavailable
                       ? "Agotado"
-                      : `${ticket.available} disponibles`}
+                      : `${ticket.capacity} disponibles`}
                   </Badge>
                 </div>
               </div>
@@ -171,7 +189,7 @@ export function TicketSelector({
             <CardContent className="pt-0">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-muted-foreground">
-                  Máximo {ticket.maxPerPerson} por persona
+                  Máximo 10 por persona
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -198,7 +216,7 @@ export function TicketSelector({
                     className="w-8 h-8 p-0 border-border/50 hover:bg-muted"
                     aria-label={`Aumentar cantidad de ${ticket.name}`}
                   >
-                    <Plus className="w-4 w-4" />
+                    <Plus className="w-4 h-4" />
                   </Button>
                 </div>
               </div>

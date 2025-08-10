@@ -213,9 +213,9 @@ export const EventDetail: FC<EventDetailProps> = ({ event }) => {
                     {shortDescription}
                   </p>
                   {longDescription && (
-                    <p className="text-muted-foreground leading-relaxed">
+                    <div className="text-muted-foreground leading-relaxed whitespace-pre-line">
                       {longDescription}
-                    </p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -227,7 +227,7 @@ export const EventDetail: FC<EventDetailProps> = ({ event }) => {
                   <TicketSelector
                     selectedTickets={selectedTickets}
                     onTicketsChange={setSelectedTickets}
-                    eventId={event.id}
+                    event={event}
                   />
                 </div>
               )}
@@ -259,13 +259,7 @@ export const EventDetail: FC<EventDetailProps> = ({ event }) => {
           <div className="lg:col-span-1">
             <div className="sticky top-24">
               <PurchaseSummary
-                event={{
-                  id: event.id,
-                  title: name,
-                  venue: venue ? venue.name : locationName,
-                  date: eventDate,
-                  status: status,
-                }}
+                event={event}
                 selectedTickets={selectedTickets}
                 onTicketsChange={setSelectedTickets}
               />

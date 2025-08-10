@@ -78,8 +78,6 @@ export default async function EventPage({
 }) {
   const { slug } = await params;
 
-  console.log("[EVENT_DETAIL_PAGE] slug:", slug);
-
   return (
     <div className="min-h-screen pt-16">
       <Suspense fallback={<EventDetailSkeleton />}>

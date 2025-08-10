@@ -2,17 +2,17 @@
 
 import { FC, useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { NavigationBar } from "./navigation-bar";
+// import { usePathname } from "next/navigation";
+// import { NavigationBar } from "./navigation-bar";
 import { cn } from "@/modules/shared/lib/utils";
-import { HeaderSearch } from "./header-search-bar";
+// import { HeaderSearch } from "./header-search-bar";
 
 export const Header: FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const pathname = usePathname();
+  // const pathname = usePathname();
 
   // Show search on homepage and events pages
-  const showSearch = pathname === "/" || pathname.startsWith("/events");
+  // const showSearch = pathname === "/" || pathname.startsWith("/events");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,12 +23,13 @@ export const Header: FC = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleSearch = (query: string) => {
+  /* const handleSearch = (query: string) => {
     // Navigate to search results or handle search logic
     console.log("Searching for:", query);
     // You can implement navigation to search results page here
     // router.push(`/events?search=${encodeURIComponent(query)}`);
   };
+  */
 
   return (
     <header
@@ -54,15 +55,15 @@ export const Header: FC = () => {
             </div>
           </Link>
 
-          {/* Search (Desktop) - Only on certain pages */}
+          {/* Search (Desktop) - Only on certain pages 
           {showSearch && (
             <div className="hidden lg:flex flex-1 justify-center max-w-md mx-8">
               <HeaderSearch onSearch={handleSearch} className="w-full" />
             </div>
           )}
-
-          {/* Navigation */}
-          <NavigationBar />
+*/}
+          {/* Navigation 
+          <NavigationBar />*/}
         </div>
       </div>
     </header>

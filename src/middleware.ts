@@ -13,8 +13,9 @@ const isProtectedRoute = createRouteMatcher([
 // ✅ Public API routes (no auth needed)
 const isPublicApiRoute = createRouteMatcher([
   "/api/events(.*)", // Your events API
-  "/api/webhooks(.*)", // Webhooks don't need auth
+  "/api/webhooks(.*)", // Webhooks don't need auth - IMPORTANT!
   "/api/ticket-types(.*)", // Public ticket info
+  "/api/purchases(.*)", // Purchase API (handles auth internally)
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
@@ -25,7 +26,8 @@ export default clerkMiddleware(async (auth, req) => {
 
   // ✅ Protect page routes that need auth
   if (isProtectedRoute(req)) {
-    await auth.protect();
+    // await auth.protect();
+    return;
   }
 });
 
