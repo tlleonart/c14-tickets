@@ -24,6 +24,41 @@ export const FeaturedCarouselSlide: FC<FeaturedCarouselSlideProps> = ({
     name,
   } = slide;
 
+  // Formatear la fecha de manera amigable
+  const formatEventDate = (dateString: string) => {
+    // Parsear la fecha ISO sin conversión de timezone
+    // "2025-08-30T22:00:00.000Z" -> mantener 22:00 como está
+    const isoDate = dateString.replace("Z", ""); // Quitar la Z para evitar conversión UTC
+    const [datePart, timePart] = isoDate.split("T");
+    const [year, month, day] = datePart.split("-").map(Number);
+    const [hour, minute] = timePart.split(":").map(Number);
+
+    // Crear fecha usando los valores exactos sin conversión
+    const date = new Date(year, month - 1, day, hour, minute);
+
+    // Opciones para formatear la fecha
+    const dateOptions: Intl.DateTimeFormatOptions = {
+      weekday: "long", // "sábado"
+      day: "numeric", // "30"
+      month: "long", // "agosto"
+      year: "numeric", // "2025"
+    };
+
+    const formattedDate = date.toLocaleDateString("es-ES", dateOptions);
+
+    // Formatear hora manualmente para mantener el valor original
+    const formattedTime = `${hour.toString().padStart(2, "0")}:${minute
+      .toString()
+      .padStart(2, "0")}`;
+
+    return {
+      date: formattedDate,
+      time: formattedTime,
+    };
+  };
+
+  const { date, time } = formatEventDate(startDatetime);
+
   return (
     <div key={id} className="relative flex-[0_0_100%] w-full h-full">
       <Image
@@ -47,8 +82,11 @@ export const FeaturedCarouselSlide: FC<FeaturedCarouselSlideProps> = ({
         <h3 className="text-xl md:text-2xl mb-2 text-gray-200 drop-shadow-md">
           {`${locationName}, ${locationCity}`}
         </h3>
+        <p className="text-lg md:text-xl mb-2 text-gray-300 drop-shadow-md capitalize">
+          {date}
+        </p>
         <p className="text-lg md:text-xl mb-4 text-gray-300 drop-shadow-md">
-          {startDatetime}
+          {time} hs
         </p>
         <p className="text-lg md:text-xl mb-8 text-gray-300 drop-shadow-md">
           {shortDescription}
