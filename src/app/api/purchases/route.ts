@@ -173,7 +173,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Verificar que tengamos la URL base
-    const appUrl = "https://https://tickets.carbono-14.net/";
+    const appUrl = "https://tickets.carbono-14.net";
     if (!appUrl) {
       console.error(
         "[CREATE_PURCHASE_ERROR] NEXT_PUBLIC_APP_URL not configured"
